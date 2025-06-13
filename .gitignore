@@ -1,0 +1,7 @@
+.backups/
+.operations.log
+.editor
+.vscode
+types
+package.json
+tsconfig.json

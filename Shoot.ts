@@ -1,6 +1,13 @@
 import { GameManager } from 'GameManager';
 import * as hz from 'horizon/core';
 
+/*******************************************************
+* Class that manages shooting, projecticle collision, etc.
+* 
+* TODO: implement an audio manager, with prop definition
+* that can be called instead of linking sounds/vfx 
+* directly from this class
+********************************************************/
 class Shoot extends hz.Component<typeof Shoot> {
 
   static propsDefinition = {
@@ -13,86 +20,106 @@ class Shoot extends hz.Component<typeof Shoot> {
   };
 
   // The game manager
-  _gameManager!: GameManager
+  private _gameManager!: GameManager
 
   // The options to use when launching the projectile.
-  _launcherOptions: hz.LaunchProjectileOptions = { speed: 100 };
+  private _launcherOptions: hz.LaunchProjectileOptions = { speed: 100 };
 
+  private _launcherGizmo?: hz.ProjectileLauncherGizmo;
 
   start() {
     console.log("initialiazing shoot script")
 
     //get game manager
     this._gameManager = GameManager.getInstance();
+
     console.log('shooting scrip with Game Manager:' + this._gameManager.entityId);
 
     // Store a reference to the projectile gizmo in the launcherGizmo variable.
-    let launcherGizmo = this.props.launcher?.as(hz.ProjectileLauncherGizmo);
+    this._launcherGizmo = this.props.launcher?.as(hz.ProjectileLauncherGizmo);
 
-    this.connectCodeBlockEvent(this.entity, hz.CodeBlockEvents.OnIndexTriggerDown, (player: hz.Player) => {
-      console.log("shot fired");
+    if (this._launcherGizmo ) {
+   
+      // Connecting the event to handle trigger down
+    this.connectCodeBlockEvent(
+      this.entity,
+      hz.CodeBlockEvents.OnIndexTriggerDown,
+      this.handleTriggerDown.bind(this));
 
-      // firing sound
-      let shootSFX = this.props.fireSFX?.as(hz.AudioGizmo);
-      if (shootSFX) {
-        shootSFX.position.set(this.entity.position.get());
-        shootSFX.play();
-      }
+    // Connecting the event to handle collisiton with the projectile gizmo.
 
-      // launch the gizmo
-      launcherGizmo?.launch(this._launcherOptions);
-    });
-
-    if (launcherGizmo) {
       this.connectCodeBlockEvent(
-        launcherGizmo,
-        hz.CodeBlockEvents.OnProjectileHitEntity,
-        (objectHit: hz.Entity, position: hz.Vec3, normal: hz.Vec3) => {
-          console.log("collision detected");
+        this._launcherGizmo ,
+        hz.CodeBlockEvents.OnProjectileHitEntity, 
+        this.handleCollision.bind(this));
+    }
+    else {
+      console.error("No projectile launcher gizmo found on the entity.");
+    }
+    
 
-          // the sound that will be played later
-          let hitSound;
+  // This function is called when the trigger is pressed down.
+  // It will play a sound and launch the projectile.
+  private handleTriggerDown(player: hz.Player) {
+    console.log("shot fired");
 
-          // apply force (as long as object are interactable)
-          console.log("Applying foce: " + this.props.objHitForceMultipler);
+    // firing sound
+    let shootSFX = this.props.fireSFX?.as(hz.AudioGizmo);
 
-          objectHit.as(hz.PhysicalEntity)?.applyForceAtPosition(
-            normal.mulInPlace(-1 * this.props.objHitForceMultipler),
-            position,
-            hz.PhysicsForceMode.Impulse);
+    if (shootSFX) {
+      shootSFX.position.set(this.entity.position.get());
+      shootSFX.play();
+    }
+    // launch the gizmo
+    if (this._launcherGizmo) {
+      this._launcherGizmo.launch(this._launcherOptions);
+    }
+  }
 
-          // determine if the object hit is killable. 
-          if (objectHit.tags.contains("killable")) {
+  // This function is called when the projectile collides with an object.
+  // It will apply a force to the object hit and play the appropriate sound. 
+  private handleCollision(objectHit: hz.Entity, position: hz.Vec3, normal: hz.Vec3) {
+    console.log("collision detected");
 
-            // object is a mob that can be killed
-            console.log("projectile hit a mob");
+    // the sound that will be played later
+    let hitSound;
 
-            // increment score
-            this._gameManager.incrementScore();
+    // apply force (as long as object are interactable)
+    console.log("Applying foce: " + this.props.objHitForceMultipler);
 
-            // Play a sound (enemy hit)
-            hitSound = this.props.objHitSFX?.as(hz.AudioGizmo);
+    objectHit.as(hz.PhysicalEntity)?.applyForceAtPosition(
+      normal.mulInPlace(-1 * this.props.objHitForceMultipler),
+      position,
+      hz.PhysicsForceMode.Impulse);
 
-          }
-          // else if (objectHit.tags.contains("destructible")) {
-          else {
+    // determine if the object hit is killable (i.e. a mob). 
+    if (objectHit.tags.contains("killable")) {
 
-            // assume it's a tomb
-            console.log("projectile hit something else");
+      // object is a mob that can be killed
+      console.log("projectile hit a mob");
 
-            // Play a sound (enemy hit)
-            hitSound = this.props.rockHitSFX?.as(hz.AudioGizmo);
+      // increment score
+      this._gameManager.incrementScore();
 
-            // Do not increment score
-          }
-        
-          // lastly, play the relevant SFX set earlier
-          if (hitSound) {
-            hitSound.position.set(position);
-            hitSound.play();
-          }
-        },
-      );
+      // Play a sound (enemy hit)
+      hitSound = this.props.objHitSFX?.as(hz.AudioGizmo);
+
+    }
+    else {
+
+      // assume it's a tomb
+      console.log("projectile hit something else");
+
+      // Play a sound (tomb/stone hit)
+      hitSound = this.props.rockHitSFX?.as(hz.AudioGizmo);
+
+       // Do not increment score
+    }
+
+    // lastly, play the relevant SFX set earlier
+    if (hitSound) {
+      hitSound.position.set(position);
+      hitSound.play();
     }
   }
 }

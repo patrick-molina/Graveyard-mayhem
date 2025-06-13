@@ -1,11 +1,5 @@
 import { Component, Entity, PropTypes, Vec3, Quaternion, World } from 'horizon/core';
 
-/*******************************************************
-* AI generated classes to animate flying ghosts in a 
-* circular pattern. 
-* Currently not use as this is conflicting with the 
-* Physics interactions, notably when hit by a projectile
-*********************************************************/
 class FlyingGhost extends Component<typeof FlyingGhost> {
   static propsDefinition = {
     ghost: { type: PropTypes.Entity },

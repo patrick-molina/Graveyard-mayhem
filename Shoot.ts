@@ -53,10 +53,12 @@ class Shoot extends hz.Component<typeof Shoot> {
         hz.CodeBlockEvents.OnProjectileHitEntity, 
         this.handleCollision.bind(this));
     }
+    
     else {
       console.error("No projectile launcher gizmo found on the entity.");
-    }
-    
+    }      
+  } 
+  
 
   // This function is called when the trigger is pressed down.
   // It will play a sound and launch the projectile.

@@ -1,35 +1,48 @@
 import * as hz from 'horizon/core';
 import { Binding } from 'horizon/ui';
 
+/*******************************************************
+* Game manager singleton class for the game. Currently 
+* tracking score only.
+* 
+* A Binding is used to update the UI, but a copy of the
+* score is kept as simple number for internal logic.
+* 
+* TODO: make it multiplayer friendly, right now there's
+* single score 
+* 
+* TODO: implement a score/leaderboard manager class
+********************************************************/
 export class GameManager extends hz.Component<typeof GameManager> {
   //export class GameManager  {
   static propsDefinition = {};
   private static _instance: GameManager;
 
   //game properties
-  score: number = 0;
-  kills!: number
+  private score: number = 0;
+  private _score: Binding<number>;
+  
+  //TODO (currently not in use)
   zombies!: number
   Ghosts!: number
-  private _score: Binding<number>;
 
   constructor() {
     super();
+    
     console.log('constructing Game Manager');
+    
     GameManager._instance = this;
-   this._score = new Binding<number>(0); // Initialize score to 0
-
-  }
-    start() {
-    console.log('creating Game Manager');
-
+    
     // initialize properties
+    this._score = new Binding<number>(0);
     this.score = 0;
-    this.kills = 0;
     this.zombies = 0;
     this.Ghosts = 0;
-
-    //this._score= new Binding<number>(0);
+  }
+    
+  
+  start() {
+    console.log('starting Game Manager');
   }
 
   // return the instance
@@ -47,36 +60,24 @@ export class GameManager extends hz.Component<typeof GameManager> {
 
     // Method to update the score (using the functional update pattern)
     public addPoints(amount: number) {
-        this._score.set(prevScore => prevScore + amount);
-        //console.log(`Score updated to: ${this._score.get()}`); // .get() should work here for debugging
+
+      // Update the Binding (for ui purpose only)
+      this._score.set(prevScore => prevScore + amount);
+
+      // Update the internal variable (for game logic)
+      this.score+=amount;
     }
 
-  // return the instance
+  
   public getScore():number {
    return this.score 
   }
 
-    // return the instance
   public incrementScore() {
     console.log("incrementing score...");
     this.score += 10;
     this._score.set(prevScore => prevScore + 10); 
   }
-
- // public get gameStateChangedEvent(): any {
-  //  if (!this._gameStateChangedEvent) {
-  //    this._gameStateChangedEvent = new Event("gameStateChanged");
-  //  }
-   // return this._gameStateChangedEvent;
-  //}
-
-  private publishEvent(eventName: string, eventData: any) {
-    // Logic to publish the event (e.g., using the Horizon Worlds event system)
-    // For simplicity, just log the event here
-    console.log(`Event ${eventName} published with data:`, eventData);
-  }
-
-
 
 }
 

@@ -13,10 +13,16 @@ class Shoot extends hz.Component<typeof Shoot> {
   static propsDefinition = {
     launcher: { type: hz.PropTypes.Entity },
     objHitForceMultipler: { type: hz.PropTypes.Number },
+
+    //SFX
     fireSFX: { type: hz.PropTypes.Entity },
-    objHitSFX: { type: hz.PropTypes.Entity },
-    objHitVFX: { type: hz.PropTypes.Entity },
+    zombieHitSFX: { type: hz.PropTypes.Entity },
+    ghostHitSFX: { type: hz.PropTypes.Entity },
+    propHitSFX: { type: hz.PropTypes.Entity },
     rockHitSFX: { type: hz.PropTypes.Entity },
+
+    //VFX
+    objHitVFX: { type: hz.PropTypes.Entity },
   };
 
   // The game manager
@@ -102,23 +108,18 @@ class Shoot extends hz.Component<typeof Shoot> {
 
       // increment score
       this._gameManager.incrementScore();
-
-      // Play a sound (enemy hit)
-      hitSound = this.props.objHitSFX?.as(hz.AudioGizmo);
-
     }
-    else {
 
-      // assume it's a tomb
-      console.log("projectile hit something else");
-
-      // Play a sound (tomb/stone hit)
+    // determine the sound to be played
+    if (objectHit.tags.contains("prop")) {
+      hitSound = this.props.propHitSFX?.as(hz.AudioGizmo);
+    } else if (objectHit.tags.contains("zombie")) {
+      hitSound = this.props.zombieHitSFX?.as(hz.AudioGizmo);
+    } else if (objectHit.tags.contains("ghost")) {
+      hitSound = this.props.ghostHitSFX?.as(hz.AudioGizmo);
+    }  else {
       hitSound = this.props.rockHitSFX?.as(hz.AudioGizmo);
-
-       // Do not increment score
     }
-
-    // lastly, play the relevant SFX set earlier
     if (hitSound) {
       hitSound.position.set(position);
       hitSound.play();
@@ -126,4 +127,4 @@ class Shoot extends hz.Component<typeof Shoot> {
   }
 }
 
-hz.Component.register(Shoot);
+hz.Component.register(Shoot)

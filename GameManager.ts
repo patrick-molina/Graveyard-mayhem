@@ -19,8 +19,8 @@ export class GameManager extends hz.Component<typeof GameManager> {
   private static _instance: GameManager;
 
   //game properties
-  private score: number = 0;
-  private _score: Binding<number>;
+  private _score: number = 0;
+  private _scoreBinding: Binding<number>;
   
   //TODO (currently not in use)
   zombies!: number
@@ -34,8 +34,8 @@ export class GameManager extends hz.Component<typeof GameManager> {
     GameManager._instance = this;
     
     // initialize properties
-    this._score = new Binding<number>(0);
-    this.score = 0;
+    this._scoreBinding = new Binding<number>(0);
+    this._score = 0;
     this.zombies = 0;
     this.Ghosts = 0;
   }
@@ -54,7 +54,7 @@ export class GameManager extends hz.Component<typeof GameManager> {
   }
 
   public getScoreBinding(): Binding<number> {
-        return this._score;
+        return this._scoreBinding;
     }
 
 
@@ -62,21 +62,21 @@ export class GameManager extends hz.Component<typeof GameManager> {
     public addPoints(amount: number) {
 
       // Update the Binding (for ui purpose only)
-      this._score.set(prevScore => prevScore + amount);
+      this._scoreBinding.set(prevScore => prevScore + amount);
 
       // Update the internal variable (for game logic)
-      this.score+=amount;
+      this._score+=amount;
     }
 
   
   public getScore():number {
-   return this.score 
+   return this._score 
   }
 
   public incrementScore() {
     console.log("incrementing score...");
-    this.score += 10;
-    this._score.set(prevScore => prevScore + 10); 
+    this._score += 10;
+    this._scoreBinding.set(prevScore => prevScore + 10); 
   }
 
 }
